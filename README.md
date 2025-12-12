@@ -43,13 +43,11 @@ Works seamlessly on:
 
 ---
 
-Install dependencies
-
+🚀 Install dependencies
 npm install
 
 
-Run the project
-
+🚀 Run the project
 npm run dev
 
 
