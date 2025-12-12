@@ -3,10 +3,6 @@
 🚀 **ChatNova** is a modern, fast, and beautifully designed AI chat web application built using **Vite + React + TailwindCSS + DaisyUI + Zustand**.  
 It provides a smooth chatting experience, theme customization, typing animations, and a clean UI similar to professional AI platforms.
 
----
-<img width="1893" height="983" alt="image" src="https://github.com/user-attachments/assets/c8cc6d43-c533-46cd-aeef-9381ff47b8f1" />
-
-
 ## ✨ Features
 
 ### 🔥 1. Modern UI / UX
