@@ -8,11 +8,8 @@ export let io;
 
 export function initSocket(server) {
   io = new Server(server, {
-    cors: {
-      origin: [
-        "http://localhost:5173",
-        "https://chatnova-jsq3.onrender.com"
-      ],
+   cors: {
+      origin: "http://localhost:5173" || "https://chatnova-jsq3.onrender.com" ,
       credentials: true,
     },
   });
