@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 
-// ================== SIGNUP ==================
+/* -------------------- SIGNUP -------------------- */
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
 
@@ -17,9 +17,7 @@ export const signup = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
+    if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -31,8 +29,12 @@ export const signup = async (req, res) => {
 
     await newUser.save();
 
-    // Generate JWT token
-    generateToken(newUser._id, res);
+    // 🔐 Generate JWT token with proper cookie flags
+    generateToken(newUser._id, res, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // required on HTTPS
+      sameSite: "None", // required for cross-origin
+    });
 
     res.status(201).json({
       _id: newUser._id,
@@ -46,7 +48,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// ================== LOGIN ==================
+/* -------------------- LOGIN -------------------- */
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -57,7 +59,12 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    generateToken(user._id, res);
+    // 🔐 Generate JWT token with proper cookie flags
+    generateToken(user._id, res, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
 
     res.status(200).json({
       _id: user._id,
@@ -71,10 +78,16 @@ export const login = async (req, res) => {
   }
 };
 
-// ================== LOGOUT ==================
+/* -------------------- LOGOUT -------------------- */
 export const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 });
+    // 🔐 Clear cookie properly
+    res.cookie("token", "", {
+      maxAge: 0,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error in logout controller:", error.message);
@@ -82,7 +95,7 @@ export const logout = (req, res) => {
   }
 };
 
-// ================== UPDATE PROFILE ==================
+/* -------------------- UPDATE PROFILE -------------------- */
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user?._id;
@@ -91,7 +104,6 @@ export const updateProfile = async (req, res) => {
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
     if (!profilePic) return res.status(400).json({ message: "Profile pic is required" });
 
-    // Upload image to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(profilePic, {
       folder: "profile_pics",
       resource_type: "image",
@@ -105,7 +117,7 @@ export const updateProfile = async (req, res) => {
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
-    ).select("-password"); // Exclude password
+    ).select("-password");
 
     res.status(200).json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
@@ -114,7 +126,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// ================== CHECK AUTH ==================
+/* -------------------- CHECK AUTH -------------------- */
 export const checkAuth = (req, res) => {
   try {
     res.status(200).json(req.user);
