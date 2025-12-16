@@ -6,32 +6,41 @@ export const onlineUsers = new Map();
 // Export socket instance
 export let io;
 
-/**
- * Initialize Socket.io server
- * @param {http.Server} server - HTTP server instance
- * @returns {Server} io - Socket.io server instance
- */
 export function initSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: "https://chatnova-jsq3.onrender.com",
+      origin: [
+        "http://localhost:5173",
+        "https://chatnova-jsq3.onrender.com"
+      ],
       credentials: true,
     },
   });
 
+  // 🔐 AUTH MIDDLEWARE (IMPORTANT)
+  io.use((socket, next) => {
+    const cookie = socket.request.headers.cookie;
+    const userId = socket.handshake.query.userId;
+
+    if (!cookie || !userId) {
+      return next(new Error("Unauthorized"));
+    }
+    next();
+  });
+
   io.on("connection", (socket) => {
     const userId = socket.handshake.query.userId;
-    if (userId) {
-      onlineUsers.set(userId, socket.id);
-      console.log(`User connected: ${userId} -> Socket ID: ${socket.id}`);
-      io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
-    }
+
+    // Store online user
+    onlineUsers.set(userId, socket.id);
+    console.log(`User connected: ${userId} -> ${socket.id}`);
+
+    io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
 
     socket.on("disconnect", () => {
-      for (const [key, value] of onlineUsers.entries()) {
-        if (value === socket.id) onlineUsers.delete(key);
-      }
-      console.log(`User disconnected: Socket ID ${socket.id}`);
+      onlineUsers.delete(userId);
+      console.log(`User disconnected: ${userId}`);
+
       io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
     });
 
@@ -46,11 +55,7 @@ export function initSocket(server) {
   return io;
 }
 
-/**
- * Helper to get receiver socket ID
- * @param {string} userId 
- * @returns {string | undefined}
- */
+// Helper
 export function getReceiverSocketId(userId) {
   return onlineUsers.get(userId);
 }
