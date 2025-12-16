@@ -16,37 +16,46 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// Middlewares
+/* -------------------- MIDDLEWARE -------------------- */
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
+
 app.use(
   cors({
-    origin: "https://chatnova-jsq3.onrender.com",
+    origin: [
+      "http://localhost:5173",
+      "https://chatnova-jsq3.onrender.com",
+    ],
     credentials: true,
   })
 );
 
-// Routes
+/* -------------------- ROUTES -------------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Serve frontend in production
+/* -------------------- PRODUCTION STATIC -------------------- */
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    res.sendFile(
+      path.join(__dirname, "../frontend/dist/index.html")
+    );
   });
 }
 
-// HTTP server & Socket.io
+/* -------------------- SERVER + SOCKET -------------------- */
 const server = http.createServer(app);
-export const io = initSocket(server); // initialize sockets
+export const io = initSocket(server);
 
-// Connect to DB and start server
+/* -------------------- START SERVER -------------------- */
 connectDB()
   .then(() => {
-    server.listen(PORT, () =>
-      console.log(`✅ Server running on PORT: ${PORT}`)
-    );
+    server.listen(PORT, () => {
+      console.log(`✅ Server running on PORT: ${PORT}`);
+    });
   })
-  .catch((err) => console.error("DB connection failed:", err));
+  .catch((err) => {
+    console.error("❌ DB connection failed:", err);
+  });
