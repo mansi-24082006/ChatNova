@@ -1,11 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 
 const AuthImagePattern = ({ title, subtitle }) => {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hover, setHover] = useState(false);
 
-  // For sparks
+  const backgroundSparks = useMemo(
+    () =>
+      Array.from({ length: 40 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2 + 1,
+        duration: Math.random() * 8 + 6,
+        delay: Math.random() * 6,
+      })),
+    []
+  );
+
   const sparks = Array.from({ length: 20 }, () => ({
     x: Math.random() * 100,
     y: Math.random() * 100,
@@ -19,28 +30,83 @@ const AuthImagePattern = ({ title, subtitle }) => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const calcRotate = () => {
-    const rotateY = ((mouse.x - window.innerWidth / 2) / window.innerWidth) * 40;
-    const rotateX = ((window.innerHeight / 2 - mouse.y) / window.innerHeight) * 40;
-    return { rotateX, rotateY };
+  const calcRotate = () => ({
+    rotateY: ((mouse.x - window.innerWidth / 2) / window.innerWidth) * 40,
+    rotateX: ((window.innerHeight / 2 - mouse.y) / window.innerHeight) * 40,
+  });
+
+  const bgMove = {
+    x: (mouse.x / window.innerWidth - 0.5) * 40,
+    y: (mouse.y / window.innerHeight - 0.5) * 40,
   };
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 via-black to-purple-900 p-12 min-h-screen perspective-[1200px]">
-      {/* 3D Cube */}
+    <div
+      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-12 perspective-[1200px]
+      bg-gradient-to-br from-[#020617] via-[#020024] to-[#000814]"
+    >
+      {/* 🌌 BACKGROUND */}
       <motion.div
-        className="w-64 h-64 relative"
+        className="absolute inset-0 z-0"
+        animate={bgMove}
+        transition={{ type: "spring", stiffness: 40, damping: 20 }}
+      >
+        {/* Nebula */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(56,189,248,0.25), transparent 65%)",
+            filter: "blur(160px)",
+          }}
+        />
+
+        {/* Stars */}
+        {backgroundSparks.map((spark, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-slate-100"
+            style={{
+              width: spark.size,
+              height: spark.size,
+              left: `${spark.x}%`,
+              top: `${spark.y}%`,
+              boxShadow: "0 0 12px rgba(186,230,253,0.9)",
+              opacity: 0.9,
+            }}
+            animate={{ y: ["0%", "-160%"], opacity: [0, 1, 1, 0] }}
+            transition={{
+              duration: spark.duration,
+              delay: spark.delay,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+        ))}
+
+        {/* Noise */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "url('https://grainy-gradients.vercel.app/noise.svg')",
+          }}
+        />
+      </motion.div>
+
+      {/* 🧊 3D CUBE */}
+      <motion.div
+        className="relative z-10 w-64 h-64"
         animate={calcRotate()}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
         style={{ transformStyle: "preserve-3d" }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
-        {/* Cube Faces */}
         {["front", "back", "left", "right", "top", "bottom"].map((face, i) => (
           <div
             key={i}
-            className="absolute w-full h-full border border-purple-400 bg-transparent"
+            className="absolute w-full h-full border border-sky-400/60 bg-transparent"
             style={{
               transform:
                 face === "front"
@@ -54,30 +120,30 @@ const AuthImagePattern = ({ title, subtitle }) => {
                   : face === "top"
                   ? "rotateX(90deg) translateZ(80px)"
                   : "rotateX(-90deg) translateZ(80px)",
-              boxShadow: "0 0 20px rgba(128,0,255,0.6)",
+              boxShadow: "0 0 22px rgba(56,189,248,0.6)",
             }}
           />
         ))}
 
-        {/* Inner Grid Lines */}
+        {/* Grid */}
         <div className="absolute inset-0">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-full h-[1px] bg-purple-500 opacity-40"
+              className="absolute w-full h-[1px] bg-sky-400/40"
               style={{ top: `${(i + 1) * 20}%` }}
             />
           ))}
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="absolute h-full w-[1px] bg-purple-500 opacity-40"
+              className="absolute h-full w-[1px] bg-sky-400/40"
               style={{ left: `${(i + 1) * 20}%` }}
             />
           ))}
         </div>
 
-        {/* Spark effect */}
+        {/* Hover sparks */}
         {hover &&
           sparks.map((spark, idx) => (
             <motion.div
@@ -92,18 +158,17 @@ const AuthImagePattern = ({ title, subtitle }) => {
                 width: spark.size,
                 height: spark.size,
                 borderRadius: "50%",
-                backgroundColor: "rgba(255,255,255,0.8)",
-                pointerEvents: "none",
-                boxShadow: "0 0 8px rgba(255,255,255,0.9)",
+                backgroundColor: "rgba(186,230,253,0.95)",
+                boxShadow: "0 0 10px rgba(186,230,253,1)",
               }}
             />
           ))}
       </motion.div>
 
-      {/* Text BELOW Cube */}
-      <div className="text-center mt-8">
-        <h2 className="text-3xl font-bold text-white drop-shadow-md">{title}</h2>
-        <p className="text-gray-300 text-lg mt-2">{subtitle}</p>
+      {/* Text */}
+      <div className="text-center mt-8 z-10">
+        <h2 className="text-3xl font-bold text-slate-100">{title}</h2>
+        <p className="text-slate-400 text-lg mt-2">{subtitle}</p>
       </div>
     </div>
   );

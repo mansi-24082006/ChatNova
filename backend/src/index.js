@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import http from "http";
+import { fileURLToPath } from "url";
 
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
@@ -13,12 +14,15 @@ import { initSocket } from "./lib/socket.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
-const __dirname = path.resolve();
 
-// Middlewares
-app.use(express.json({ limit: "10mb" }));
-app.use(cookieParser());
+/* ✅ IMPORTANT: USE 5002 (MATCH FRONTEND) */
+const PORT = process.env.PORT || 5002;
+
+/* Fix __dirname for ES modules */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/* ✅ MIDDLEWARES */
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -26,11 +30,14 @@ app.use(
   })
 );
 
-// Routes
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+
+/* ✅ ROUTES */
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Serve frontend in production
+/* ✅ PRODUCTION FRONTEND */
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
   app.get("*", (req, res) => {
@@ -38,15 +45,19 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// HTTP server & Socket.io
+/* ✅ HTTP SERVER */
 const server = http.createServer(app);
-export const io = initSocket(server); // initialize sockets
 
-// Connect to DB and start server
+/* ✅ SOCKET INITIALIZATION */
+export const io = initSocket(server);
+
+/* ✅ START SERVER */
 connectDB()
   .then(() => {
-    server.listen(PORT, () =>
-      console.log(`✅ Server running on PORT: ${PORT}`)
-    );
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on PORT: ${PORT}`);
+    });
   })
-  .catch((err) => console.error("DB connection failed:", err));
+  .catch((err) => {
+    console.error("❌ DB connection failed:", err);
+  });
