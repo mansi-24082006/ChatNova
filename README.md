@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🌟 ChatNova – Modern AI Chat Platform (Vite + React + Tailwind + Zustand)
 
 🚀 **ChatNova** is a modern, fast, and beautifully designed AI chat web application built using **Vite + React + TailwindCSS + DaisyUI + Zustand**.  
