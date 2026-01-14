@@ -49,9 +49,3 @@ npm install
 
 🚀 Run the project
 npm run dev
-
-
-
-=======
-# ChatNova
->>>>>>> 06f9daec868b3dfac8854ed3ecc0ab8f0d18ea32
